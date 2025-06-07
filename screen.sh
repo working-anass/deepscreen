@@ -9,9 +9,12 @@ RESOLUTION="1280x1024x24"
 # --- Install Dependencies ---
 echo "[*] Installing Dependencies..."
 sudo apt update
-sudo apt install -y firefox wget curl x11-utils imagemagick openbox xvfb jq \
+sudo apt install -y wget curl x11-utils imagemagick openbox xvfb jq \
                     scrot feh tint2 xfce4-terminal lxappearance pcmanfm
-
+# --- Install Google Chrome ---   
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+sudo apt --fix-broken install
 # --- Install getscreen.me ---
 echo "[*] Installing getscreen.me..."
 wget https://getscreen.me/download/getscreen.me.deb -O /tmp/getscreen.me.deb
