@@ -9,7 +9,7 @@ RESOLUTION="1280x1024x24"
 # --- Install Dependencies ---
 echo "[*] Installing Dependencies..."
 sudo apt update
-sudo apt install -y firefox-esr wget curl x11-utils imagemagick openbox xvfb jq \
+sudo apt install -y firefox wget curl x11-utils imagemagick openbox xvfb jq \
                     scrot feh tint2 xfce4-terminal lxappearance pcmanfm
 
 # --- Install getscreen.me ---
