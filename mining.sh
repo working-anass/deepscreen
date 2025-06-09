@@ -19,26 +19,7 @@ git clone https://github.com/xmrig/xmrig.git
 
 # Step 5: Build xmrig
 echo "Step 5: Building xmrig..."
-cd xmrig && mkdir build && cd build
-(
-    nice -n 19 cmake ..
-    nice -n 19 make -j1
-) &
-
-# Store the PID of the background subshell
-BUILD_PID=$!
-
-echo "Build process started in background with PID: $BUILD_PID"
-
-# Wait for the build process to finish
-wait $BUILD_PID
-
-# Check the exit status of the build process
-if [ $? -eq 0 ]; then
-    echo "Build process completed successfully."
-else
-    echo "Build process failed."
-fi
+cd xmrig && mkdir build && cd build && cmake .. && make -j1
 
 # Step 6: Run xmrig
 echo "Step 6: Running xmrig..."
