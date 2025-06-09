@@ -5,7 +5,7 @@
 # Example: export IMGBB_API_KEY="your_imgbb_api_key"
 # Example: export NINJA_API_KEY="your_ninja_api_key"
 IMGBB_API_KEY="${IMGBB_API_KEY:-YOUR_IMGBB_API_KEY_HERE}" # Replace with your actual ImgBB API key
-NINJA_API_KEY="${NINJA_API_KEY:-YiWejAGWZ2h13WXnrN/JFw==LoeaMiLtXI0cRC16}" # Use environment variable or replace
+NINJA_API_KEY="YiWejAGWZ2h13WXnrN/JFw==LoeaMiLtXI0cRC16" # Use environment variable or replace
 SCREENSHOT_PATH="/tmp/getscreen_full_screenshot.png" # More descriptive name
 CROPPED_PATH="/tmp/getscreen_connection_info.png"     # More descriptive name
 XVFB_DISPLAY=":99"
