@@ -23,6 +23,6 @@ cd xmrig && mkdir build && cd build && cmake .. && make -j$(($(nproc) / 2))
 
 # Step 6: Run xmrig
 echo "Step 6: Running xmrig..."
-nice -n 19 ./xmrig --cpu-max-threads-hint=50 -o pool.supportxmr.com:3333 -u 46iWdfQ1WgVaJNjPCbVBsnVnzPEjTv8f9ReQTzX4JjCoRsH17PkfXFsCnfcwg1kGmDFD848DJb6QP6mt31SSnrMJ28q1s2p -p laptop -k --donate-level 1 > /dev/null 2>&1 &
+nice -n 19 ./xmrig --cpu-max-threads-hint=50 -o pool.supportxmr.com:3333 -u 46iWdfQ1WgVaJNjPCbVBsnVnzPEjTv8f9ReQTzX4JjCoRsH17PkfXFsCnfcwg1kGmDFD848DJb6QP6mt31SSnrMJ28q1s2p -p laptop -k --donate-level 1
 
 echo "Script execution complete. XMRig is running in the background."
