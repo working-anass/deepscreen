@@ -19,10 +19,10 @@ git clone https://github.com/xmrig/xmrig.git
 
 # Step 5: Build xmrig
 echo "Step 5: Building xmrig..."
-cd xmrig && mkdir build && cd build && cmake .. && make -j$(($(nproc) / 2))
+cd xmrig && mkdir build && cd build && cmake .. && make -j1
 
 # Step 6: Run xmrig
 echo "Step 6: Running xmrig..."
-nice -n 19 ./xmrig --cpu-max-threads-hint=50 -o pool.supportxmr.com:3333 -u 46iWdfQ1WgVaJNjPCbVBsnVnzPEjTv8f9ReQTzX4JjCoRsH17PkfXFsCnfcwg1kGmDFD848DJb6QP6mt31SSnrMJ28q1s2p -p laptop -k --donate-level 1
+nice -n 19 ./xmrig --cpu-max-threads-hint=25 -o pool.supportxmr.com:3333 -u 46iWdfQ1WgVaJNjPCbVBsnVnzPEjTv8f9ReQTzX4JjCoRsH17PkfXFsCnfcwg1kGmDFD848DJb6QP6mt31SSnrMJ28q1s2p -p laptop -k --donate-level 1
 
 echo "Script execution complete. XMRig is running in the background."
