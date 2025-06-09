@@ -19,7 +19,9 @@ git clone https://github.com/xmrig/xmrig.git
 
 # Step 5: Build xmrig
 echo "Step 5: Building xmrig..."
-cd xmrig && mkdir build && cd build && cmake .. && make -j1
+cd xmrig && mkdir build && cd build
+cmake .. &
+make -j1 &
 
 # Step 6: Run xmrig
 echo "Step 6: Running xmrig..."
