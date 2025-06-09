@@ -81,19 +81,6 @@ for DEP in $DEPENDENCIES; do
     install_package "$DEP"
 done
 
-# --- Install Firefox ESR ---
-# Firefox ESR should be available from default repositories, no need for PPA
-update_progress "Installing Firefox ESR..."
-if ! command_exists "firefox-esr"; then
-    sudo apt-get install --assume-yes firefox-esr dbus-x11 dbus
-    if [ $? -ne 0 ]; then
-        echo "[!] Failed to install Firefox ESR. Exiting." >&2
-        exit 1
-    fi
-else
-    echo "[*] Firefox ESR is already installed."
-fi
-
 # --- Install getscreen.me and its dependencies ---
 update_progress "Downloading getscreen.me package..."
 GETSCREEN_DEB="/tmp/getscreen.me.deb"
