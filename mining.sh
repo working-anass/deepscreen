@@ -21,7 +21,9 @@ git clone https://github.com/xmrig/xmrig.git
 echo "Step 5: Building xmrig..."
 cd xmrig && mkdir build && cd build
 nice -n 19 cmake .. &
+wait
 nice -n 19 make -j1 &
+wait
 
 # Step 6: Run xmrig
 echo "Step 6: Running xmrig..."
