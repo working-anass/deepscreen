@@ -3,8 +3,9 @@
 # --- Ollama Server Setup Script ---
 # This script configures Ollama on your powerful Linux PC (server)
 # to allow remote access from other machines on your network.
-# It forces Ollama to listen on all interfaces (0.0.0.0), sets up 'ollama serve' via systemd,
-# ensures it's running, waits, opens firewall, and downloads the model.
+# It automatically detects the server's primary non-loopback IP address,
+# sets up 'ollama serve' functionality via systemd, ensures it's running,
+# waits for a short period, opens firewall, and downloads the model.
 
 # Function to check for root privileges
 check_root() {
@@ -15,16 +16,50 @@ check_root() {
     fi
 }
 
+# Function to automatically detect the server's IP address
+autodetect_server_ip_auto() {
+    local interface
+    local detected_ip=""
+
+    echo "Attempting to automatically detect the server's IP address..."
+
+    # 1. Try to find the IP associated with the default route interface
+    interface=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $5}' | head -n 1)
+    if [[ -n "$interface" ]]; then
+        # Get IPv4 address, exclude loopback and docker interfaces
+        detected_ip=$(ip -4 addr show dev "$interface" | grep -oP 'inet \K[\d.]+' | grep -v '^127\.0\.0\.1$' | grep -v '^172\.17\.')
+        if [[ -n "$detected_ip" ]]; then
+            echo "Detected IP via default route on $interface: $detected_ip"
+            OLLAMA_SERVER_IP="$detected_ip"
+            return 0
+        fi
+    fi
+
+    echo "Could not confidently determine IP via default route. Trying 'hostname -I'..."
+
+    # 2. Fallback to 'hostname -I'
+    # hostname -I lists all local IPs. We'll take the first non-loopback, non-docker one.
+    while IFS= read -r ip_candidate; do
+        if [[ "$ip_candidate" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ && ! "$ip_candidate" =~ ^127\.0\.0\.1$ && ! "$ip_candidate" =~ ^172\.17\. ]]; then
+            detected_ip="$ip_candidate"
+            echo "Detected IP via hostname -I: $detected_ip"
+            OLLAMA_SERVER_IP="$detected_ip"
+            return 0
+        fi
+    done < <(hostname -I 2>/dev/null | xargs -n 1)
+
+    # 3. If no suitable IP found, default to 0.0.0.0
+    echo "Warning: Could not automatically detect a suitable non-loopback IP address."
+    echo "Defaulting Ollama to listen on all interfaces (0.0.0.0)."
+    echo "You MUST manually find this PC's accessible IP (e.g., using 'ip a') and use it on the client."
+    OLLAMA_SERVER_IP="0.0.0.0"
+    return 0
+}
+
 # --- Main Script Execution ---
 echo "Starting Ollama Server Setup..."
 check_root
-
-# We will force Ollama to listen on all interfaces (0.0.0.0) for maximum accessibility.
-# This assumes your powerful PC has a network interface accessible by your less powerful PC.
-OLLAMA_SERVER_IP="0.0.0.0"
-echo "Configuring Ollama server to listen on all available network interfaces (0.0.0.0)."
-echo "You will need to use the actual IP address of this powerful PC on your network to connect from the client."
-echo "You can find this PC's IP using 'ip a' or 'hostname -I' later."
+autodetect_server_ip_auto # Call the automatic IP detection function
 
 # 1. Install Ollama
 echo "1. Installing Ollama. This will set up the 'ollama serve' functionality as a systemd service..."
@@ -92,10 +127,10 @@ echo "Model download finished (or skipped if already present)."
 
 echo ""
 echo "--- Ollama Server Setup Complete! ---"
-echo "Your Ollama server is now configured to listen on all interfaces (0.0.0.0) on port 11434."
-echo "Please find the actual IP address of this powerful PC that is reachable from your client PC."
-echo "You can try running 'ip a' or 'hostname -I' on this powerful PC."
+echo "Your Ollama server is now configured to listen on $OLLAMA_SERVER_IP:11434."
+echo "You will need to use the actual IP address of this powerful PC on your network to connect from the client."
+echo "You can find this PC's IP by running 'ip a' or 'hostname -I' on this machine."
 echo ""
-echo "Once you have that IP, use it in the client script."
-echo "For example, if the IP is 192.168.1.100, then on your client PC, set OLLAMA_HOST to http://192.168.1.100:11434."
+echo "Once you have that IP, use it in the client script for your less powerful PC."
+echo "For example, if the IP is 10.1.0.155, then on your client PC, enter '10.1.0.155' when prompted."
 echo ""
