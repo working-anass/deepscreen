@@ -3,8 +3,8 @@
 # --- Ollama Server Setup Script ---
 # This script configures Ollama on your powerful Linux PC (server)
 # to allow remote access from other machines on your network.
-# It sets up the 'ollama serve' functionality via systemd, ensures it's running,
-# waits for a short period, and then downloads the 'deepseek-coder:33b-instruct' model.
+# It forces Ollama to listen on all interfaces (0.0.0.0), sets up 'ollama serve' via systemd,
+# ensures it's running, waits, opens firewall, and downloads the model.
 
 # Function to check for root privileges
 check_root() {
@@ -15,28 +15,16 @@ check_root() {
     fi
 }
 
-# Function to get and validate IP address
-get_server_ip() {
-    local ip_address
-    while true; do
-        read -p "Enter the IP address your Ollama server should listen on (e.g., 192.168.1.100 or 0.0.0.0 for all interfaces): " ip_address
-        # Basic validation: check if it's not empty and looks like an IP or 0.0.0.0
-        if [[ -z "$ip_address" ]]; then
-            echo "IP address cannot be empty. Please try again."
-        elif [[ "$ip_address" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || "$ip_address" == "0.0.0.0" ]]; then
-            echo "Using server IP: $ip_address"
-            OLLAMA_SERVER_IP="$ip_address"
-            break
-        else
-            echo "Invalid IP address format. Please enter a valid IPv4 address or 0.0.0.0."
-        fi
-    done
-}
-
 # --- Main Script Execution ---
 echo "Starting Ollama Server Setup..."
 check_root
-get_server_ip
+
+# We will force Ollama to listen on all interfaces (0.0.0.0) for maximum accessibility.
+# This assumes your powerful PC has a network interface accessible by your less powerful PC.
+OLLAMA_SERVER_IP="0.0.0.0"
+echo "Configuring Ollama server to listen on all available network interfaces (0.0.0.0)."
+echo "You will need to use the actual IP address of this powerful PC on your network to connect from the client."
+echo "You can find this PC's IP using 'ip a' or 'hostname -I' later."
 
 # 1. Install Ollama
 echo "1. Installing Ollama. This will set up the 'ollama serve' functionality as a systemd service..."
@@ -54,6 +42,7 @@ OLLAMA_OVERRIDE_FILE="$OLLAMA_OVERRIDE_DIR/override.conf"
 
 mkdir -p "$OLLAMA_OVERRIDE_DIR"
 
+# Ensure the file is created/overwritten correctly
 cat << EOF > "$OLLAMA_OVERRIDE_FILE"
 [Service]
 Environment="OLLAMA_HOST=$OLLAMA_SERVER_IP"
@@ -65,7 +54,7 @@ systemctl daemon-reload
 
 # 3. Start/Restart Ollama service to run 'ollama serve' in background
 echo "3. Starting/Restarting Ollama service to ensure 'ollama serve' is running in the background..."
-if ! ollama serve &; then
+if ! systemctl restart ollama; then
     echo "Error: Failed to start/restart Ollama service. Please check 'sudo systemctl status ollama'."
     exit 1
 fi
@@ -76,8 +65,25 @@ echo "4. Waiting 10 seconds for the Ollama server to fully initialize..."
 sleep 10
 echo "Wait complete. Proceeding with model download."
 
-# 5. Download the specified AI model (deepseek-coder:33b-instruct)
-echo "5. Downloading the 'deepseek-coder:33b-instruct' AI model. This may take some time depending on your internet speed..."
+# 5. Configure Firewall
+echo "5. Configuring Firewall (checking for ufw or firewalld)..."
+if command -v ufw &> /dev/null; then
+    echo "  - UFW detected. Allowing port 11434/tcp."
+    ufw allow 11434/tcp
+    ufw reload
+    echo "  - UFW rules updated."
+elif command -v firewall-cmd &> /dev/null; then
+    echo "  - Firewalld detected. Allowing port 11434/tcp."
+    firewall-cmd --permanent --add-port=11434/tcp
+    firewall-cmd --reload
+    echo "  - Firewalld rules updated."
+else
+    echo "  - No common firewall (ufw or firewalld) detected. Please configure your firewall manually if you have one."
+    echo "    Ensure port 11434/tcp is open for incoming connections."
+fi
+
+# 6. Download the specified AI model (deepseek-coder:33b-instruct)
+echo "6. Downloading the 'deepseek-coder:33b-instruct' AI model. This may take some time depending on your internet speed..."
 # Using 'ollama pull' for non-interactive download
 if ! ollama pull deepseek-coder:33b-instruct; then
     echo "Warning: Failed to download 'deepseek-coder:33b-instruct' model. You can try 'ollama run deepseek-coder:33b-instruct' later."
@@ -86,7 +92,10 @@ echo "Model download finished (or skipped if already present)."
 
 echo ""
 echo "--- Ollama Server Setup Complete! ---"
-echo "Your Ollama server is now configured to listen on $OLLAMA_SERVER_IP:11434 and serving the model."
-echo "You can now proceed to set up your client PC using the client script."
-echo "Remember to replace '<powerful_pc_ip_address>' with '$OLLAMA_SERVER_IP' in the client script."
+echo "Your Ollama server is now configured to listen on all interfaces (0.0.0.0) on port 11434."
+echo "Please find the actual IP address of this powerful PC that is reachable from your client PC."
+echo "You can try running 'ip a' or 'hostname -I' on this powerful PC."
+echo ""
+echo "Once you have that IP, use it in the client script."
+echo "For example, if the IP is 192.168.1.100, then on your client PC, set OLLAMA_HOST to http://192.168.1.100:11434."
 echo ""
