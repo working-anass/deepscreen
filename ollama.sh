@@ -3,8 +3,8 @@
 # --- Ollama Server Setup Script ---
 # This script configures Ollama on your powerful Linux PC (server)
 # to allow remote access from other machines on your network.
-# It sets up the 'ollama serve' functionality via systemd and downloads
-# the 'deepseek-coder:33b-instruct' model.
+# It sets up the 'ollama serve' functionality via systemd, ensures it's running,
+# waits for a short period, and then downloads the 'deepseek-coder:33b-instruct' model.
 
 # Function to check for root privileges
 check_root() {
@@ -39,7 +39,7 @@ check_root
 get_server_ip
 
 # 1. Install Ollama
-echo "1. Installing Ollama. This will set up the 'ollama serve' as a systemd service..."
+echo "1. Installing Ollama. This will set up the 'ollama serve' functionality as a systemd service..."
 if ! curl -fsSL https://ollama.com/install.sh | sh; then
     echo "Error: Ollama installation failed. Please check your internet connection or try again."
     exit 1
@@ -47,8 +47,7 @@ fi
 echo "Ollama installed successfully."
 
 # 2. Configure OLLAMA_HOST for systemd service
-# This is the most robust way to set environment variables for systemd services,
-# ensuring the 'ollama serve' process starts with the correct host.
+# This ensures the 'ollama serve' process (run by systemd) starts with the correct host.
 echo "2. Configuring Ollama service to listen on $OLLAMA_SERVER_IP..."
 OLLAMA_OVERRIDE_DIR="/etc/systemd/system/ollama.service.d"
 OLLAMA_OVERRIDE_FILE="$OLLAMA_OVERRIDE_DIR/override.conf"
@@ -64,30 +63,18 @@ EOF
 echo "Reloading systemd daemon..."
 systemctl daemon-reload
 
-# 3. Restart Ollama service
-echo "3. Restarting Ollama service. This implicitly runs 'ollama serve' with the new configuration..."
-if ! systemctl restart ollama; then
-    echo "Error: Failed to restart Ollama service. Please check 'sudo systemctl status ollama'."
+# 3. Start/Restart Ollama service to run 'ollama serve' in background
+echo "3. Starting/Restarting Ollama service to ensure 'ollama serve' is running in the background..."
+if ! ollama serve &; then
+    echo "Error: Failed to start/restart Ollama service. Please check 'sudo systemctl status ollama'."
     exit 1
 fi
-echo "Ollama service restarted and serving on $OLLAMA_SERVER_IP:11434."
+echo "Ollama service started/restarted and serving on $OLLAMA_SERVER_IP:11434."
 
-# 4. Configure Firewall
-echo "4. Configuring Firewall (checking for ufw or firewalld)..."
-if command -v ufw &> /dev/null; then
-    echo "  - UFW detected. Allowing port 11434/tcp."
-    ufw allow 11434/tcp
-    ufw reload
-    echo "  - UFW rules updated."
-elif command -v firewall-cmd &> /dev/null; then
-    echo "  - Firewalld detected. Allowing port 11434/tcp."
-    firewall-cmd --permanent --add-port=11434/tcp
-    firewall-cmd --reload
-    echo "  - Firewalld rules updated."
-else
-    echo "  - No common firewall (ufw or firewalld) detected. Please configure your firewall manually if you have one."
-    echo "    Ensure port 11434/tcp is open for incoming connections."
-fi
+# 4. Wait 10 seconds for the Ollama server to fully initialize
+echo "4. Waiting 10 seconds for the Ollama server to fully initialize..."
+sleep 10
+echo "Wait complete. Proceeding with model download."
 
 # 5. Download the specified AI model (deepseek-coder:33b-instruct)
 echo "5. Downloading the 'deepseek-coder:33b-instruct' AI model. This may take some time depending on your internet speed..."
@@ -95,7 +82,7 @@ echo "5. Downloading the 'deepseek-coder:33b-instruct' AI model. This may take s
 if ! ollama pull deepseek-coder:33b-instruct; then
     echo "Warning: Failed to download 'deepseek-coder:33b-instruct' model. You can try 'ollama run deepseek-coder:33b-instruct' later."
 fi
-echo "Model download finished (or skipped)."
+echo "Model download finished (or skipped if already present)."
 
 echo ""
 echo "--- Ollama Server Setup Complete! ---"
