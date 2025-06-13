@@ -13,10 +13,11 @@ sudo apt update
 sudo apt install -y wget curl x11-utils imagemagick openbox xvfb jq scrot feh tint2 xfce4-terminal lxappearance pcmanfm wmctrl
 
 # --- Install Firefox ---
-add-apt-repository ppa:mozillateam/ppa -y
-apt update
-apt install --assume-yes firefox-esr
-apt install --assume-yes dbus-x11 dbus
+sudo apt install software-properties-common
+sudo add-apt-repository ppa:mozillateam/ppa -y  
+sudo apt update
+sudo apt install --assume-yes firefox-esr
+sudo apt install --assume-yes dbus-x11 dbus
 
 # --- Install getscreen.me ---
 echo "[*] Installing getscreen.me..."
