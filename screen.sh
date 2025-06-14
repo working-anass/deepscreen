@@ -208,7 +208,7 @@ rm -f /tmp/test_crop.png "$TEMP_OCR"
 
 # --- Launch the mining script and store its PID ---
 echo "[*] Launching the mining script in a new terminal..."
-xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/mining.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
+xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/dero.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
 
 # --- Automated Cleanup After Mining Script Launch ---
 echo "[*] Waiting for 5 minutes after mining script launch for cleanup..."
